@@ -1,0 +1,4 @@
+jetson-fanctl
+=============
+
+A simple script to automatically manage jetson's PWM fan.

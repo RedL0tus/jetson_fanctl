@@ -1,0 +1,305 @@
+#!/bin/bash
+
+# ============================================================
+#                  Jetson Fan Control script
+# ============================================================
+
+# See https://github.com/RedL0tus/jetson_fanctl for more information.
+
+# Default configurations
+MODE="automatic";
+FAN_OFF_TEMP="20";
+FAN_MAX_TEMP="40";
+INTERVAL="5";
+NVPMODEL_MODE="0";
+FAN_LEVEL="255";
+
+# Read configuration
+source /etc/jetson_fanctl.conf;
+
+# ====================
+# Service
+# ====================
+
+# Fan curve
+function _auto_fan_level {
+	local temp=$(( $(cat "/sys/devices/virtual/thermal/thermal_zone0/temp") / 1000 ));
+	if [ "${temp}" -gt "${FAN_MAX_TEMP}" ]; then
+		echo "255";
+	elif [ "${temp}" -lt "${FAN_OFF_TEMP}" ]; then
+		echo "0";
+	else
+		echo $(( 255 * ( "${temp}" - "${FAN_OFF_TEMP}" ) / ( "${FAN_MAX_TEMP}" - "${FAN_OFF_TEMP}" )));
+	fi
+}
+
+# Timer handler
+function _start_cycle {
+	echo ">>> Started fanctl service";
+
+	# Set power management mode
+	echo ">>> Setting power management mode to ${NVPMODEL_MODE}";
+	eval "/usr/sbin/nvpmodel -m $NVPMODEL_MODE";
+
+	# Read current fan level
+	local current_fan_level=$(cat "/sys/devices/pwm-fan/target_pwm");
+	local next_fan_level="${current_fan_level}";
+
+	echo ">>> Entering loop...";
+	while true; do
+		# Source configuration
+		source /etc/jetson_fanctl.conf;
+
+		# Set fan speed
+		case "${MODE,,}" in
+			"constant")
+				next_fan_level="${FAN_LEVEL}";
+			;;
+			"automatic")
+				next_fan_level="$(_auto_fan_level)";
+			;;
+			*)
+				echo ">>> Invalid mode, acting as it is in automatic mode"
+				next_fan_level="${_auto_fan_level}";
+			;;
+		esac
+
+		# Set new fan level
+		while [ "${current_fan_level}" -ne "${next_fan_level}" ]; do
+			echo ">>> Setting fan level to ${next_fan_level}";
+			echo "${next_fan_level}" > "/sys/devices/pwm-fan/target_pwm";
+			current_fan_level=$(cat "/sys/devices/pwm-fan/target_pwm");
+		done
+
+		# Wait
+		eval "sleep ${INTERVAL}";
+	done
+}
+
+# ====================
+# Commands
+# ====================
+
+# Save config
+function _save_config {
+cat > /etc/jetson_fanctl.conf <<EOF
+# Jetson fan control script configuration
+
+# Options:
+#   MODE: Mode of the service. Available modes: "automatic", "constant"
+#   FAN_OFF_TEMP: Temperature to turn off the fan, in Celsius.
+#   FAN_MAX_TEMP: Temperature to turn the fan to maximium speed, in Celsius.
+#   INTERVAL: Time interval between each check, in seconds.
+#   NVPMODEL_MODE: Parameter of \`nvpmodel -m\`.
+#   FAN_LEVEL: Constant fan level, only effective in constant mode.
+
+MODE="${MODE}";
+FAN_OFF_TEMP="${FAN_OFF_TEMP}";
+FAN_MAX_TEMP="${FAN_MAX_TEMP}";
+INTERVAL="${INTERVAL}";
+NVPMODEL_MODE="${NVPMODEL_MODE}";
+FAN_LEVEL="${FAN_LEVEL}";
+EOF
+}
+
+# Show config
+function _get_config {
+cat <<EOF
+# Current config:
+
+MODE="${MODE}";
+FAN_OFF_TEMP="${FAN_OFF_TEMP}";
+FAN_MAX_TEMP="${FAN_MAX_TEMP}";
+INTERVAL="${INTERVAL}";
+NVPMODEL_MODE="${NVPMODEL_MODE}";
+FAN_LEVEL="${FAN_LEVEL}";
+EOF
+}
+
+# Initialize configurations
+function _init {
+	_save_config;
+}
+
+# Set MODE
+function _set_mode {
+	case "${1,,}" in
+		"automatic")
+			MODE="automatic";
+		;;
+		"constant")
+			MODE="constant";
+		;;
+		*)
+			echo "Invalid mode. Available modes: \"automatic\", \"constant\"";
+			exit 1;
+		;;
+	esac
+	_save_config;
+}
+
+# Get MODE
+function _get_mode {
+        echo "${MODE}";
+}
+
+# Set FAN_OFF_TEMP
+function _set_fan_off_temp {
+	FAN_OFF_TEMP="${1}";
+	_save_config;
+}
+
+# Get FAN_OFF_TEMP
+function _get_fan_off_temp {
+	echo "${FAN_OFF_TEMP}";
+}
+
+# Set FAN_MAX_TEMP
+function _set_fan_max_temp {
+	FAN_MAX_TEMP="${1}";
+	_save_config;
+}
+
+# Get FAN_MAX_TEMP
+function _get_fan_max_temp {
+        echo "${FAN_MAX_TEMP}";
+}
+
+# Set INTERVAL
+function _set_interval {
+	INTERVAL="${1}";
+	_save_config;
+}
+
+# Get INTERVAL
+function _get_interval {
+        echo "${INTERVAL}";
+}
+
+# Set NVPMODEL_MODE
+function _set_nvpmodel_mode {
+	NVPNODEL_MODE="${1}";
+	_save_config;
+}
+
+# Get NVPMODEL_MODE
+function _get_nvpmodel_mode {
+        echo "${NVPMODEL_MODE}";
+}
+
+# Set FAN_LEVEL
+function _set_fan_level {
+	FAN_LEVEL="${1}";
+	_save_config;
+}
+
+# Get FAN_LEVEL
+function _get_fan_level {
+        echo "${FAN_LEVEL}";
+}
+
+# Get current temp
+function _get_current_temp {
+	echo $(( $(cat "/sys/devices/virtual/thermal/thermal_zone0/temp") / 1000 ));
+}
+
+# Get current fan level
+function _get_current_fan_level {
+	cat "/sys/devices/pwm-fan/target_pwm";
+}
+
+# Display help
+function _help {
+cat << EOF
+usage: jetson_fanctl [-h --help] subcommand [optional_input]
+  options:
+    --help, -h             Same as calling the help subcommand.
+  subcommands:
+    init                   Write default configuration.
+    handle                 Start the service
+    set-mode mode          Set service mode.
+    get-mode               Get service mode.
+    set-fan-off-temp temp  Set fan off temperature, in Celsius.
+    get-fan-off-temp       Get fan off temperature, in Celsius.
+    set-fan-max-temp temp  Set fan max temperature, in Celsius.
+    get-fan-max-temp       Get fan max temperature, in Celsius.
+    set-interval sec       Set update time interval for the service.
+    get-interval           Get update time interval for the service.
+    set-pm-mode mode       Set power management mode.
+    get-pm-mode            Get power management mode.
+    set-fan-level num      Set configured fan level in constant mode.
+    get-fan-level          Get configured fan level.
+    get-current-temp       Get current temperature, in Celsius.
+    get-current-fan-level  Get current fan level.
+    get-config             Show current configuration.
+    help                   Show this help message.
+
+Configurations stored in /etc/jetson_fanctl.conf
+EOF
+}
+
+# ====================
+# Main
+# ====================
+
+# Handle commands
+case "${1}" in
+	"init")
+		_init;
+	;;
+	"handle")
+		_start_cycle;
+	;;
+	"set-mode")
+		_set_mode "${2}";
+	;;
+	"get-mode")
+		_get_mode;
+	;;
+	"set-fan-off-temp")
+		_set_fan_off_temp "${2}";
+	;;
+	"get-fan-off-temp")
+                _get_fan_off_temp;
+        ;;
+	"set-fan-max-temp")
+		_set_fan_max_temp "${2}";
+	;;
+	"get-fan-max-temp")
+                _get_fan_max_temp;
+        ;;
+	"set-interval")
+		_set_interval "${2}";
+	;;
+	"get-interval")
+                _get_interval;
+        ;;
+	"set-pm-mode")
+		_set_nvpmodel_mode "${2}";
+	;;
+	"get-pm-mode")
+                _get_nvpmodel_mode;
+        ;;
+	"set-fan-level")
+		_set_fan_level "${2}";
+	;;
+	"get-fan-level")
+                _get_fan_level;
+        ;;
+	"get-current-temp")
+		_get_current_temp;
+	;;
+	"get-current-fan-level")
+		_get_current_fan_level;
+	;;
+	"get-config")
+		_get_config;
+	;;
+	"help"|"-h"|"--help")
+		_help;
+	;;
+	*)
+		echo -ne "Command not found. \n\n";
+		_help;
+	;;
+esac

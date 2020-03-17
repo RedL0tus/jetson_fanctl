@@ -1,0 +1,69 @@
+.TH JETSON_FANCTL 1
+.SH NAME
+jetson_fanctl \- a simple script to control Jetson's PWM fan
+.SH SYNOPSIS
+.B jetson_fanctl
+[\fB\-h\fR]
+[\fB\-\-help\fR]
+.IR subcommands
+[OPTIONAL_PARAMETERS]
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Equivalent to the \fIhelp\fR subcommand.
+.SH SUBCOMMANDS
+.TP
+.BR init
+Write default configuration.
+.TP
+.BR set-mode " " [\fIautomatic, constant\fR]
+Set service mode.
+.TP
+.BR get-mode
+Get current service mode.
+.TP
+.BR set-fan-off-temp " " \fItemp\fR
+Set fan off temperature, in Celsius.
+.TP
+.BR get-fan-off-temp
+Get fan off temperature, in Celsius.
+.TP
+.BR set-fan-max-temp " " \fItemp\fR
+Set fan max temperature, in Celsius.
+.TP
+.BR get-fan-max-temp
+Get fan max temperature, in Celsius.
+.TP
+.BR set-interval " " \fIsec\fR
+Set update time interval for the service.
+.TP
+.BR get-interval
+Get update time interval for the service.
+.TP
+.BR set-pm-mode " " \fImode\fR
+Set power management mode.
+.TP
+.BR get-pm-mode
+Get power management mode.
+.TP
+.BR set-fan-level " " \fInum\fR
+Set configured fan level in constant mode.
+.TP
+.BR get-fan-level
+Get configured fan level.
+.TP
+.BR get-current-temp
+Get current temperature, in Celsius.
+.TP
+.BR get-current-fan-level
+Get current fan level.
+.TP
+.BR get-config
+Show current configuration.
+.TP
+.BR help
+Show this help message.
+.SH FILES
+.I /etc/jetson_fanctl.conf
+.SH SEE ALSO
+.BR jetson_fanctl.conf(5)

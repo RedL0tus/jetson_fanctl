@@ -1,0 +1,14 @@
+jetson-fanctl (1.0.2) bionic; urgency=medium
+
+  * Fix debian control files.
+  * Rename `show-config` subcommand to `get-command`.
+  * Add `init` subcommand.
+
+ -- Kay Lin <i@v2bv.net>  Mon, 16 Mar 2020 00:16:22 -0700
+
+jetson-fanctl (1.0.1) bionic; urgency=medium
+
+  * Initial Release.
+  * Restart build on PPA.
+
+ -- Kay Lin <i@v2bv.net>  Sun, 15 Mar 2020 00:16:07 -0700

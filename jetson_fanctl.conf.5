@@ -1,0 +1,38 @@
+.TH "jetson_fanctl.conf" 5
+.SH NAME
+/etc/jetson_fanctl.conf \- configuration file for 
+.B jetson_fanctl(8).
+.SH DESCRIPTION
+The file 
+.I /etc/jetson_fanctl.conf
+contains configurations for the script
+.B jetson_fanctl(8).
+Each option takes the form
+.IR option "=" value .
+It follows the syntax of bash scripts.
+
+The valid configuration options are:
+.TP
+\fBMODE\fP
+Mode of the service. Available modes: "automatic", "constant".
+.TP
+\fBFAN_OFF_TEMP\fP
+Temperature to turn off the fan, in Celsius.
+.TP
+\fBFAN_MAX_TEMP\fP
+Temperature to turn the fan to maximium speed, in Celsius.
+.TP
+\fBINTERVAL\fP
+Time interval between each check, in seconds.
+.TP
+\fBNVPMODEL_MODE\fP
+Parameter for `nvpmodel -m`.
+.TP
+\fBFAN_LEVEL\fP
+Constant fan level, only effective in constant mode.
+.TP
+
+.SH FILES
+.I /etc/jetson_fanctl.conf
+.SH SEE ALSO
+.BR jetson_fanctl(8)

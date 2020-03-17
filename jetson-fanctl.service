@@ -1,0 +1,12 @@
+[Unit]
+Description=Jetson fanctl daemon
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/jetson_fanctl handle
+StandardOutput=journal+console
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
