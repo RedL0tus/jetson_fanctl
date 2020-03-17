@@ -2,14 +2,16 @@ Source: jetson-fanctl
 Section: utils
 Priority: optional
 Maintainer: Kay Lin <i@v2bv.net>
-
 Build-Depends: debhelper (>= 10)
 Standards-Version: 4.1.2
 Homepage: https://github.com/RedL0tus/jetson-fanctl
 Vcs-Git: https://github.com/RedL0tus/jetson-fanctl.git
 Vcs-Browser: https://github.com/RedL0tus/jetson-fanctl
+
 Package: jetson-fanctl
 Architecture: any
-Depends: bash, systemd
+Depends: bash,
+         systemd,
+         ${misc:Depends},
 Description: A utility to control NVIDIA Jetson's PWM fan.
   A simple script that works with systemd to manage NVIDIA Jetson's PWM fan.
